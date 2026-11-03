@@ -92,6 +92,16 @@ backend
 - JSON.parse()
 - MongoDB
 
+## Pruebas de la API - Módulo Materias (Parte B)
+
+Se ejecutaron y validaron correctamente todas las pruebas de la API utilizando Thunder Client:
+
+- GET /materias: Consulta del listado general (Retorna `200 OK` y arreglo con materias).
+- GET /materias/:codigo: Consulta individual por código de negocio (Retorna `200 OK` si existe o `404 Not Found` si no existe).
+- POST /materias: Registro de nuevas materias con validaciones de campos obligatorios, código único, carga horaria entera positiva y estado `activa`/`inactiva` (Retorna `201 Created` o `400 Bad Request`).
+- PUT /materias/:codigo: Actualización de datos de una materia existente (Retorna `200 OK` o `404 Not Found`).
+- DELETE /materias/:codigo: Eliminación de materias y verificación de persistencia posterior (Retorna `200 OK` y posterior `404 Not Found` al consultar el código eliminado).
+
 ## Autor
 
 Aquino Matías
