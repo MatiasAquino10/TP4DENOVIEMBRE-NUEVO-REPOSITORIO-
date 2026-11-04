@@ -97,14 +97,29 @@ export default function Header() {
                         >
                             Docentes
                         </Link>
-                        <IconButton
+                        <Link
                             component={RouterLink}
-                            to="/ayuda"
-                            aria-label="Ayuda"
-                            color="primary"
-                            sx={{ mx: 0.25 }}
-                        >
-                            <HelpOutlineRoundedIcon />
+                            to="/materias"
+                            color="text.primary"
+                            underline="none"
+                            sx={{ 
+                                px: { xs: 1, sm: 1.5 }, 
+                                py: 1, 
+                                borderRadius: 2, 
+                                typography: "body1", 
+                                "&:hover": { bgcolor: "action.hover" } 
+                            }}
+                            >
+                            Materias
+                            </Link>
+                            <IconButton
+                                component={RouterLink}
+                                to="/ayuda"
+                                aria-label="Ayuda"
+                                color="primary"
+                                sx={{ mx: 0.25 }}
+                                >
+                        <HelpOutlineRoundedIcon />
                         </IconButton>
                         <SelectorTema />
                     </Stack>
