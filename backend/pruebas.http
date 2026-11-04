@@ -49,3 +49,108 @@ Content-Type: application/json
     "especialidad": "Programación",
     "correo": "rocio@mail.com"
 }
+
+### 1. Listar (colección vacía)
+GET http://localhost:3000/materias
+
+### 5. Alta válida
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"PRG4","nombre":"Programación IV","descripcion":"React y Express","cargaHoraria":96,"estado":"activa"}
+
+### 5b. Segunda materia
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"BD1","nombre":"Base de Datos I","cargaHoraria":64,"estado":"activa"}
+
+### 3. Consultar por código
+GET http://localhost:3000/materias/PRG4
+
+### 4. Código inexistente (404)
+GET http://localhost:3000/materias/XXX
+
+### 6. Sin código (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"nombre":"Test","cargaHoraria":10,"estado":"activa"}
+
+### 7. Sin nombre (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T1","cargaHoraria":10,"estado":"activa"}
+
+### 8. Sin carga horaria (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T2","nombre":"Test","estado":"activa"}
+
+### 9a. Carga horaria cero (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T3","nombre":"Test","cargaHoraria":0,"estado":"activa"}
+
+### 9b. Carga horaria negativa (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T4","nombre":"Test","cargaHoraria":-5,"estado":"activa"}
+
+### 9c. Carga horaria decimal (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T5","nombre":"Test","cargaHoraria":2.5,"estado":"activa"}
+
+### 10. Código duplicado (409)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"PRG4","nombre":"Otra","cargaHoraria":10,"estado":"activa"}
+
+### 11. Estado no permitido (400)
+POST http://localhost:3000/materias
+Content-Type: application/json
+
+{"codigo":"T6","nombre":"Test","cargaHoraria":10,"estado":"pausada"}
+
+### 12. Modificar nombre y descripción
+PUT http://localhost:3000/materias/PRG4
+Content-Type: application/json
+
+{"nombre":"Programación IV (2026)","descripcion":"Nueva descripción","cargaHoraria":96,"estado":"activa"}
+
+### 13. Modificar carga horaria y estado
+PUT http://localhost:3000/materias/PRG4
+Content-Type: application/json
+
+{"nombre":"Programación IV (2026)","cargaHoraria":120,"estado":"inactiva"}
+
+### 14. Modificar inexistente (404)
+PUT http://localhost:3000/materias/XXX
+Content-Type: application/json
+
+{"nombre":"Test","cargaHoraria":10,"estado":"activa"}
+
+### 15. Cambiar código por uno existente (409)
+PUT http://localhost:3000/materias/PRG4
+Content-Type: application/json
+
+{"codigo":"BD1","nombre":"Programación IV","cargaHoraria":96,"estado":"activa"}
+
+### 16. Eliminar existente
+DELETE http://localhost:3000/materias/BD1
+
+### 16b. Consultarla de nuevo (404)
+GET http://localhost:3000/materias/BD1
+
+### 17. Eliminar inexistente (404)
+DELETE http://localhost:3000/materias/XXX
+
+### 18. Listado final
+GET http://localhost:3000/materias
