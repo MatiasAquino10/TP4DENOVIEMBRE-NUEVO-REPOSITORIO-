@@ -1,18 +1,17 @@
-const express = require('express');
-const router = express.Router();
+const express = require("express")
 const {
-  getMaterias,
-  getMateriaByCodigo,
-  createMateria,
-  updateMateria,
-  deleteMateria
-} = require('../controllers/materiaController');
+    obtenerMaterias,
+    obtenerMateria,
+    crearMateria,
+    actualizarMateria,
+    eliminarMateria
+} = require("../controllers/materiaController")
+const router = express.Router()
 
-// Definición de las rutas REST para materias
-router.get('/', getMaterias);
-router.get('/:codigo', getMateriaByCodigo);
-router.post('/', createMateria);
-router.put('/:codigo', updateMateria);
-router.delete('/:codigo', deleteMateria);
+router.get("/", obtenerMaterias)
+router.get("/:codigo", obtenerMateria)
+router.post("/", crearMateria)
+router.put("/:codigo", actualizarMateria)
+router.delete("/:codigo", eliminarMateria)
 
-module.exports = router;
+module.exports = router

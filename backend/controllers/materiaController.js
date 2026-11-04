@@ -1,95 +1,142 @@
-const Materia = require('../models/Materia');
+const Materia = require("../models/Materia")
 
-// 1. Obtener todas las materias
-const getMaterias = async (req, res) => {
-  try {
-    const materias = await Materia.find();
-    res.json(materias);
-  } catch (error) {
-    res.status(500).json({ mensaje: 'Error al obtener las materias', error: error.message });
-  }
-};
+const ESTADOS = ["activa", "inactiva"]
 
-// 2. Obtener una materias específica por su codigo funcional
-const getMateriaByCodigo = async (req, res) => {
-  try {
-    const { codigo } = req.params;
-    const materia = await Materia.findOne({ codigo });
-    if (!materia) {
-      return res.status(404).json({ mensaje: 'Materia no encontrada' });
+function normalizarCodigo(codigo) {
+    return String(codigo ?? "").trim().toUpperCase()
+}
+
+function validarMateria({ codigo, nombre, descripcion, cargaHoraria, estado }) {
+    if (typeof codigo !== "string" || codigo.trim() === "") {
+        return "El código es obligatorio"
     }
-    res.json(materia);
-  } catch (error) {
-    res.status(500).json({ mensaje: 'Error al obtener la materia', error: error.message });
-  }
-};
+    if (typeof nombre !== "string" || nombre.trim() === "") {
+        return "El nombre es obligatorio"
+    }
+    if (nombre.trim().length < 3 || nombre.trim().length > 100) {
+        return "El nombre debe tener entre 3 y 100 caracteres"
+    }
+    if (descripcion !== undefined && descripcion !== null && descripcion !== "") {
+        if (typeof descripcion !== "string" || descripcion.trim() === "") {
+            return "La descripción no puede contener únicamente espacios"
+        }
+        if (descripcion.trim().length > 500) {
+            return "La descripción es demasiado larga"
+        }
+    }
+    if (typeof cargaHoraria !== "number" || !Number.isInteger(cargaHoraria) || cargaHoraria <= 0) {
+        return "La carga horaria debe ser un entero mayor que cero"
+    }
+    if (!ESTADOS.includes(estado)) {
+        return "El estado debe ser activa o inactiva"
+    }
+    return null
+}
 
-// 3. Registrar una nueva materia
-const createMateria = async (req, res) => {
-  try {
-    const { codigo, nombre, descripcion, cargaHoraria, estado } = req.body;
-    
-    const nuevaMateria = new Materia({
-      codigo,
-      nombre,
-      descripcion,
-      cargaHoraria,
-      estado
-    });
-
-    const materiaGuardada = await nuevaMateria.save();
-    res.status(201).json(materiaGuardada);
-  } catch (error) {
-    // Control de código duplicado (índice único de MongoDB)
+function responderError(res, error, accion) {
     if (error.code === 11000) {
-      return res.status(400).json({ mensaje: 'Ya existe una materia registrada con ese código' });
+        return res.status(409).json({ mensaje: "Ya existe una materia con ese código" })
     }
-    res.status(400).json({ mensaje: 'Error al registrar la materia', error: error.message });
-  }
-};
-
-// 4. Mofidicar una materia existente por su código
-const updateMateria = async (req, res) => {
-  try {
-    const { codigo } = req.params;
-    const { nombre, descripcion, cargaHoraria, estado } = req.body;
-
-    const materiaActualizada = await Materia.findOneAndUpdate(
-      { codigo },
-      { nombre, descripcion, cargaHoraria, estado },
-      { new: true, runValidators: true }
-    );
-
-    if (!materiaActualizada) {
-      return res.status(404).json({ mensaje: 'Materia no encontrada para modificar' });
+    if (error.name === "ValidationError" || error.name === "CastError") {
+        return res.status(400).json({ mensaje: "Los datos de la materia no son válidos" })
     }
+    console.error(`Error al ${accion}:`, error)
+    return res.status(500).json({ mensaje: `No se pudo ${accion} la materia` })
+}
 
-    res.json(materiaActualizada);
-  } catch (error) {
-    res.status(400).json({ mensaje: 'Error al modificar la materia', error: error.message });
-  }
-};
-
-// 5. Eliminar una materia por su código
-const deleteMateria = async (req, res) => {
-  try {
-    const { codigo } = req.params;
-    const materiaEliminada = await Materia.findOneAndDelete({ codigo });
-
-    if (!materiaEliminada) {
-      return res.status(404).json({ mensaje: 'Materia no encontrada para eliminar' });
+async function obtenerMaterias(req, res) {
+    try {
+        const materias = await Materia.find().sort({ codigo: 1 })
+        res.json(materias)
+    } catch (error) {
+        responderError(res, error, "obtener")
     }
+}
 
-    res.json({ mensaje: 'Materia eliminada correctamente', materia: materiaEliminada });
-  } catch (error) {
-    res.status(500).json({ mensaje: 'Error al eliminar la materia', error: error.message });
-  }
-};
+async function obtenerMateria(req, res) {
+    try {
+        const materia = await Materia.findOne({ codigo: normalizarCodigo(req.params.codigo) })
+        if (!materia) {
+            return res.status(404).json({ mensaje: "Materia no encontrada" })
+        }
+        res.json(materia)
+    } catch (error) {
+        responderError(res, error, "obtener")
+    }
+}
+
+async function crearMateria(req, res) {
+    try {
+        const errorValidacion = validarMateria(req.body)
+        if (errorValidacion) {
+            return res.status(400).json({ mensaje: errorValidacion })
+        }
+        const { nombre, descripcion, cargaHoraria, estado } = req.body
+        const codigo = normalizarCodigo(req.body.codigo)
+
+        const existe = await Materia.findOne({ codigo })
+        if (existe) {
+            return res.status(409).json({ mensaje: "Ya existe una materia con ese código" })
+        }
+
+        const nueva = await Materia.create({ codigo, nombre, descripcion, cargaHoraria, estado })
+        res.status(201).json(nueva)
+    } catch (error) {
+        responderError(res, error, "registrar")
+    }
+}
+
+async function actualizarMateria(req, res) {
+    try {
+        const codigoActual = normalizarCodigo(req.params.codigo)
+        const datos = { ...req.body, codigo: req.body.codigo ?? codigoActual }
+
+        const errorValidacion = validarMateria(datos)
+        if (errorValidacion) {
+            return res.status(400).json({ mensaje: errorValidacion })
+        }
+
+        const existente = await Materia.findOne({ codigo: codigoActual })
+        if (!existente) {
+            return res.status(404).json({ mensaje: "Materia no encontrada" })
+        }
+
+        const codigoNuevo = normalizarCodigo(datos.codigo)
+        if (codigoNuevo !== codigoActual) {
+            const duplicada = await Materia.findOne({ codigo: codigoNuevo })
+            if (duplicada) {
+                return res.status(409).json({ mensaje: "Ya existe una materia con ese código" })
+            }
+        }
+
+        const { nombre, descripcion, cargaHoraria, estado } = datos
+        const actualizada = await Materia.findOneAndUpdate(
+            { codigo: codigoActual },
+            { codigo: codigoNuevo, nombre, descripcion, cargaHoraria, estado },
+            { new: true, runValidators: true }
+        )
+        res.json(actualizada)
+    } catch (error) {
+        responderError(res, error, "modificar")
+    }
+}
+
+async function eliminarMateria(req, res) {
+    try {
+        const eliminada = await Materia.findOneAndDelete({ codigo: normalizarCodigo(req.params.codigo) })
+        if (!eliminada) {
+            return res.status(404).json({ mensaje: "Materia no encontrada" })
+        }
+        res.json({ mensaje: "Materia eliminada correctamente" })
+    } catch (error) {
+        responderError(res, error, "eliminar")
+    }
+}
 
 module.exports = {
-  getMaterias,
-  getMateriaByCodigo,
-  createMateria,
-  updateMateria,
-  deleteMateria
-};
+    obtenerMaterias,
+    obtenerMateria,
+    crearMateria,
+    actualizarMateria,
+    eliminarMateria
+}
